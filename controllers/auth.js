@@ -5,12 +5,16 @@ function getSignup(req, res) {
   res.render("customer/auth/signup");
 }
 
-async function signup(req, res) {
+async function signup(req, res, next) {
   const { email, password, fullname, street, postal, city } = req.body;
   // validate
   // save to db
   const user = new User(email, password, fullname, street, postal, city);
-  await user.signup();
+  try {
+    await user.signup();
+  } catch (err) {
+    return next(err); // pass to default error handler
+  }
   res.redirect("/login");
 }
 
@@ -18,10 +22,15 @@ function getLogin(req, res) {
   res.render("customer/auth/login");
 }
 
-async function login(req, res) {
+async function login(req, res, next) {
   const { email, password } = req.body;
   const user = new User(email, password);
-  const existingUser = await user.getUserWithSameEmail();
+  let existingUser;
+  try {
+    existingUser = await user.getUserWithSameEmail();
+  } catch (err) {
+    return next(err);
+  }
 
   // ============= check email =============
   if (!existingUser) {
@@ -29,7 +38,7 @@ async function login(req, res) {
     return;
   }
   // ============= check password =============
-  const passwordIsCorrect = user.hasMatchingPWD(existingUser.password);
+  const passwordIsCorrect = await user.hasMatchingPWD(existingUser.password);
   if (!passwordIsCorrect) {
     res.redirect("/login");
     return;
@@ -40,9 +49,15 @@ async function login(req, res) {
   });
 }
 
+function logout(req, res) {
+  authUtil.destroyUserAuthSession(req);
+  res.redirect("/login");
+}
+
 module.exports = {
   getSignup,
   signup,
   getLogin,
   login,
+  logout,
 };
