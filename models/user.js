@@ -20,6 +20,16 @@ class User {
       address: this.address,
     });
   }
+
+  // check email to login
+  async getUserWithSameEmail() {
+    return db.getDb().collection("users").findOne({ email: this.email });
+  }
+
+  // check pwd to login
+  hasMatchingPWD(hashedPwd) {
+    return bcrypt.compare(this.password, hashedPwd);
+  }
 }
 
 module.exports = User;

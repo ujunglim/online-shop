@@ -4,9 +4,12 @@ const session = require("express-session");
 
 const path = require("path");
 const authRoutes = require("./routes/auth");
+const productRoutes = require("./routes/products");
+const baseRoutes = require("./routes/base");
 const db = require("./data/database");
 const addCsrfTokenMiddleware = require("./middleware/csrf-token");
 const errorHandlerMiddleware = require("./middleware/error-handler");
+const checkAuthStatusMiddleware = require("./middleware/check-auth");
 const createSessionConfig = require("./config/session");
 const app = express();
 
@@ -20,9 +23,15 @@ app.use(express.urlencoded({ extended: false }));
 const sessionConfig = createSessionConfig();
 app.use(session(sessionConfig));
 app.use(csurf());
-app.use(addCsrfTokenMiddleware); // make all request can check token
 
+// ====== middleware ======
+app.use(addCsrfTokenMiddleware); // make all request can check token
+app.use(checkAuthStatusMiddleware);
+
+// ====== routes ======
 app.use(authRoutes);
+app.use(productRoutes);
+app.use(baseRoutes);
 
 app.use(errorHandlerMiddleware);
 
